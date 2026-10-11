@@ -43,10 +43,10 @@ export const mountLevelField = (parent: Element, initial: LevelFieldProps): Leve
   let props = initial;
   let selected = new Set(props.selected);
 
-  const field = el('div', 'casleo-field');
-  const caption = el('span', 'casleo-field-label');
-  const row = el('div', 'casleo-levels');
-  const note = el('span', 'casleo-field-note');
+  const field = el('div', 'openchamber-providers-field');
+  const caption = el('span', 'openchamber-providers-field-label');
+  const row = el('div', 'openchamber-providers-levels');
+  const note = el('span', 'openchamber-providers-field-note');
   row.setAttribute('role', 'group');
   field.append(caption, row, note);
   parent.append(field);
@@ -81,7 +81,7 @@ export const mountLevelField = (parent: Element, initial: LevelFieldProps): Leve
   };
 
   for (const level of props.levels) {
-    const card = el('button', 'casleo-level');
+    const card = el('button', 'openchamber-providers-level');
     card.type = 'button';
     card.textContent = level;
     const hint = props.hints?.[level];

@@ -1,8 +1,8 @@
 {
-  "name": "casleo",
-  "version": "1.1.3",
+  "name": "openchamber-providers",
+  "version": "1.1.4",
   "private": true,
-  "description": "Casleo — manage custom OpenAI-compatible providers for OpenCode from an OpenChamber panel.",
+  "description": "OpenChamber Providers — manage custom OpenAI-compatible providers for OpenCode from an OpenChamber panel.",
   "openchamber": {
     "apiVersion": 1,
     "engines": {
@@ -10,8 +10,8 @@
     },
     "contributes": {
       "panel": {
-        "id": "casleo",
-        "name": "Casleo",
+        "id": "openchamber-providers",
+        "name": "OpenChamber Providers",
         "icon": "icon.svg",
         "entry": "panel/index.html"
       },

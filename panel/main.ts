@@ -1,5 +1,5 @@
 /**
- * Casleo — manage custom OpenAI-compatible providers for OpenCode.
+ * OpenChamber Providers — manage custom OpenAI-compatible providers for OpenCode.
  *
  * It writes the `providers` block of ~/.config/opencode/opencode.json (or
  * opencode.jsonc) directly. OpenCode watches that file and rebuilds its
@@ -9,7 +9,7 @@
  * Everything the user fills in — provider name, base URL, API key, models,
  * context length and reasoning levels — is written as plain provider config.
  * Saving merges with what is already on disk (see providers.ts) and edits the
- * file in place (see jsonc.ts), so fields Casleo does not manage, comments
+ * file in place (see jsonc.ts), so fields OpenChamber Providers does not manage, comments
  * and unrelated settings all survive.
  */
 import { connectHost, HostRequestError } from '@openchamber/sdk';
@@ -67,7 +67,7 @@ type Disposable = { dispose: () => void };
 
 const STRINGS = {
   en: {
-    title: 'Casleo',
+    title: 'OpenChamber Providers',
     tagline: 'Custom providers for OpenCode',
     add: 'Add provider',
     refresh: 'Refresh',
@@ -75,7 +75,7 @@ const STRINGS = {
     readFailed: 'Could not read opencode.json',
     retry: 'Try again',
     emptyTitle: 'No custom providers yet',
-    emptyBody: 'Add an OpenAI-compatible endpoint. Casleo writes it into ~/.config/opencode/opencode.json, so it appears under Settings → Providers.',
+    emptyBody: 'Add an OpenAI-compatible endpoint. OpenChamber Providers writes it into ~/.config/opencode/opencode.json, so it appears under Settings → Providers.',
     newTitle: 'New provider',
     editTitle: 'Edit provider',
     back: 'Back',
@@ -135,7 +135,7 @@ const STRINGS = {
     modelCount: '{count} models',
   },
   zh: {
-    title: 'Casleo',
+    title: 'OpenChamber Providers',
     tagline: 'OpenCode 自定义供应商',
     add: '新增供应商',
     refresh: '刷新',
@@ -143,7 +143,7 @@ const STRINGS = {
     readFailed: '无法读取 opencode.json',
     retry: '重试',
     emptyTitle: '还没有自定义供应商',
-    emptyBody: '添加一个 OpenAI 兼容的中转站。Casleo 会把它写进 ~/.config/opencode/opencode.json，保存后就会出现在「设置 → 提供商」里。',
+    emptyBody: '添加一个 OpenAI 兼容的中转站。OpenChamber Providers 会把它写进 ~/.config/opencode/opencode.json，保存后就会出现在「设置 → 提供商」里。',
     newTitle: '新增供应商',
     editTitle: '编辑供应商',
     back: '返回',
@@ -675,7 +675,7 @@ const renderForm = (body: HTMLElement): void => {
     }));
 
     const advanced = document.createElement('details');
-    advanced.className = 'casleo-advanced';
+    advanced.className = 'openchamber-providers-advanced';
     const advancedSummary = document.createElement('summary');
     advancedSummary.textContent = t.advancedOptions;
     advanced.append(advancedSummary);
@@ -792,7 +792,7 @@ const renderForm = (body: HTMLElement): void => {
 const render = (): void => {
   clearMounted();
   const shell = document.createElement('div');
-  shell.className = 'casleo-shell';
+  shell.className = 'openchamber-providers-shell';
   root.append(shell);
   const body = column(shell, '12px');
   if (view === 'form') renderForm(body);

@@ -3,7 +3,7 @@
  * no host — so it stays unit-testable.
  *
  * `buildProvider` merges what the form collected with the block already on
- * disk, so saving from Casleo keeps the fields it does not manage (provider
+ * disk, so saving from OpenChamber Providers keeps the fields it does not manage (provider
  * headers/env, per-model cost/status/options/...). `draftFrom` and
  * `collectProviders` read both the v2 spelling (`package`, `settings`,
  * `modelID`) and the legacy v1 one (`npm`, `options`, `id`), and a v1 entry
@@ -263,7 +263,7 @@ export const buildProvider = (draft: ProviderDraft, existing?: JsonObject): Json
 
     // Declare capabilities explicitly so clients do not have to rely on
     // OpenCode's custom-model fallbacks. Extra input modalities (video, pdf,
-    // audio) set outside Casleo are preserved; the v1 `attachment` and
+    // audio) set outside OpenChamber Providers are preserved; the v1 `attachment` and
     // `tool_call` flags are folded into the v2 `capabilities` block.
     const previousCapabilities = isObject(previousModel.capabilities) ? previousModel.capabilities : {};
     const extraInput = Array.isArray(previousCapabilities.input)

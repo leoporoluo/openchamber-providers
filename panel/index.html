@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Casleo</title>
+    <title>OpenChamber Providers</title>
     <style>
       html,
       body {
@@ -20,55 +20,55 @@
       html[data-surface="page"] #root {
         padding: 24px;
       }
-      .casleo-shell {
+      .openchamber-providers-shell {
         min-width: 0;
       }
-      html[data-surface="page"] .casleo-shell {
+      html[data-surface="page"] .openchamber-providers-shell {
         max-width: 720px;
         margin: 0 auto;
       }
       /* Reasoning-level cards (panel/levels.ts). Colours come from the host
          theme variables the SDK paints on the root. */
-      .casleo-advanced {
+      .openchamber-providers-advanced {
         display: flex;
         flex-direction: column;
         gap: 10px;
         min-width: 0;
       }
-      .casleo-advanced > summary {
+      .openchamber-providers-advanced > summary {
         width: fit-content;
         color: var(--surface-muted-foreground, var(--oc-muted, inherit));
         font-size: 0.8125rem;
         cursor: pointer;
         user-select: none;
       }
-      .casleo-advanced[open] > summary {
+      .openchamber-providers-advanced[open] > summary {
         color: var(--surface-foreground, var(--oc-foreground, inherit));
       }
-      .casleo-field {
+      .openchamber-providers-field {
         display: flex;
         flex-direction: column;
         gap: 6px;
         min-width: 0;
       }
-      .casleo-field-label {
+      .openchamber-providers-field-label {
         font-size: 0.8125rem;
         font-weight: 500;
       }
-      .casleo-field-note {
+      .openchamber-providers-field-note {
         font-size: 0.75rem;
         line-height: 1.45;
         color: var(--surface-muted-foreground, var(--oc-muted, gray));
       }
-      .casleo-field[data-empty="true"] .casleo-field-note {
+      .openchamber-providers-field[data-empty="true"] .openchamber-providers-field-note {
         color: var(--warning-text, var(--oc-warning-text, inherit));
       }
-      .casleo-levels {
+      .openchamber-providers-levels {
         display: flex;
         flex-wrap: wrap;
         gap: 6px;
       }
-      .casleo-level {
+      .openchamber-providers-level {
         display: inline-flex;
         align-items: center;
         justify-content: center;
@@ -85,10 +85,10 @@
         cursor: pointer;
         transition: background 150ms ease-out, border-color 150ms ease-out, color 150ms ease-out;
       }
-      .casleo-level:hover {
+      .openchamber-providers-level:hover {
         background: var(--interactive-hover, var(--oc-hover, transparent));
       }
-      .casleo-level[data-on="true"] {
+      .openchamber-providers-level[data-on="true"] {
         border-style: solid;
         border-color: var(--primary, var(--oc-primary, currentColor));
         background: color-mix(in srgb, var(--primary, var(--oc-primary, currentColor)) 12%, transparent);
