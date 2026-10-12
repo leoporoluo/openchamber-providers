@@ -475,8 +475,9 @@ const openCreate = (): void => {
 const renderList = (body: HTMLElement): void => {
   const header = row(body);
   header.style.justifyContent = 'space-between';
+  // The host's panel header already shows the extension name, so the body
+  // keeps only the tagline instead of repeating the title here.
   const titles = column(header, '2px');
-  heading(titles, t.title, '15px');
   muted(titles, t.tagline);
 
   const actions = row(header, '6px');

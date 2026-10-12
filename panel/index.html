@@ -9,6 +9,10 @@
       body {
         margin: 0;
         height: 100%;
+        /* The host paints its surface colour on the iframe; without a matching
+           background the color-scheme: light root canvas shows through as plain
+           white, which differs from the native panel background. */
+        background: var(--oc-bg, Canvas);
       }
       #root {
         height: 100%;
