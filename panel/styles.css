@@ -470,20 +470,6 @@ html[data-oc-surface='page'] .panes {
   outline-offset: 1px;
 }
 
-.field-note {
-  font-size: 0.6875rem;
-  line-height: 1.45;
-  color: var(--oc-muted);
-}
-
-.field-note[data-tone='error'] {
-  color: var(--oc-error-text, var(--oc-error, #d9534f));
-}
-
-.field-note[data-tone='warning'] {
-  color: var(--oc-warning-text, var(--oc-warning, inherit));
-}
-
 .add-model {
   display: inline-flex;
   align-items: center;

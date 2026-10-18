@@ -800,7 +800,6 @@ export class ProviderPanel {
       value: current.name,
       placeholder: 'Acme',
       error: this.errors.name ? this.tr(this.errors.name) : undefined,
-      helper: isNew ? fill(this.tr('providerIDHint'), { id: current.providerID || '…' }) : undefined,
       onChange: (value) => {
         current.name = value;
         if (this.errors.name) {
@@ -812,11 +811,7 @@ export class ProviderPanel {
         }
         current.providerID = uniqueIDFrom(value, this.snapshot?.providers.map((entry) => entry.id) ?? []);
         // The kit repaints `value` on update, so the current text travels with it.
-        nameField.update({
-          value: current.name,
-          error: undefined,
-          helper: fill(this.tr('providerIDHint'), { id: current.providerID }),
-        });
+        nameField.update({ value: current.name, error: undefined });
       },
     });
     this.mounted.push(nameField);
@@ -854,7 +849,6 @@ export class ProviderPanel {
         mono: true,
         placeholder: 'aisdk:@ai-sdk/openai-compatible',
         error: this.errors.customPackage ? this.tr(this.errors.customPackage) : undefined,
-        helper: this.tr('customPackageHelp'),
         onChange: (value) => {
           current.customPackage = value;
           if (this.errors.customPackage) {
@@ -872,7 +866,6 @@ export class ProviderPanel {
       mono: true,
       placeholder: 'https://api.example.com/v1',
       error: this.errors.baseURL ? this.tr(this.errors.baseURL) : undefined,
-      helper: this.tr('baseURLHelp'),
       onChange: (value) => {
         current.baseURL = value;
         if (this.errors.baseURL) {
@@ -890,7 +883,6 @@ export class ProviderPanel {
       mono: true,
       placeholder: 'sk-... or {env:ACME_API_KEY}',
       error: this.errors.apiKey ? this.tr(this.errors.apiKey) : undefined,
-      helper: this.tr('apiKeyHelp'),
       onChange: (value) => {
         current.apiKey = value;
         if (this.errors.apiKey) {
@@ -1083,9 +1075,7 @@ export class ProviderPanel {
       });
       levelRow.append(chip);
     }
-    const levelNote = el('div', 'field-note');
-    levelNote.textContent = this.tr('reasoningHelp');
-    levels.append(levelsLabel, levelRow, levelNote);
+    levels.append(levelsLabel, levelRow);
     fields.append(levels);
 
     const switches = el('div', 'switches wide');
