@@ -28,6 +28,7 @@ import {
   emptyDraft,
   emptyModel,
   REASONING_LEVELS,
+  uniqueIDFrom,
   type ModelDraft,
   type ProviderDraft,
   type ProviderEntry,
@@ -787,36 +788,35 @@ export class ProviderPanel {
     connection.append(card);
     body.append(connection);
 
-    const idField = mountTextField(grid, {
-      label: this.tr('providerID'),
-      value: current.providerID,
-      mono: true,
-      disabled: this.editingID !== null,
-      placeholder: 'acme',
-      error: this.errors.providerID ? this.tr(this.errors.providerID) : undefined,
-      helper: this.editingID ? this.tr('providerIDLocked') : this.tr('providerIDHelp'),
-      onChange: (value) => {
-        current.providerID = value;
-        if (this.errors.providerID) {
-          this.errors.providerID = undefined;
-          idField.update({ error: undefined, helper: this.tr('providerIDHelp') });
-        }
-      },
-    });
-    this.mounted.push(idField);
+    const isNew = this.editingID === null;
 
+    /*
+     * One field for the provider: its name. The ID OpenCode keys the block by
+     * is derived from that name, so it is never a second field. A name with no
+     * latin characters falls back to `provider`, with a suffix when taken.
+     */
     const nameField = mountTextField(grid, {
       label: this.tr('providerName'),
       value: current.name,
       placeholder: 'Acme',
       error: this.errors.name ? this.tr(this.errors.name) : undefined,
-      helper: this.tr('providerNameHelp'),
+      helper: isNew ? fill(this.tr('providerIDHint'), { id: current.providerID || '…' }) : undefined,
       onChange: (value) => {
         current.name = value;
         if (this.errors.name) {
           this.errors.name = undefined;
-          nameField.update({ error: undefined });
         }
+        if (!isNew) {
+          nameField.update({ value: current.name, error: undefined });
+          return;
+        }
+        current.providerID = uniqueIDFrom(value, this.snapshot?.providers.map((entry) => entry.id) ?? []);
+        // The kit repaints `value` on update, so the current text travels with it.
+        nameField.update({
+          value: current.name,
+          error: undefined,
+          helper: fill(this.tr('providerIDHint'), { id: current.providerID }),
+        });
       },
     });
     this.mounted.push(nameField);
@@ -859,7 +859,7 @@ export class ProviderPanel {
           current.customPackage = value;
           if (this.errors.customPackage) {
             this.errors.customPackage = undefined;
-            packageField.update({ error: undefined });
+            packageField.update({ value: current.customPackage, error: undefined });
           }
         },
       });
@@ -877,7 +877,7 @@ export class ProviderPanel {
         current.baseURL = value;
         if (this.errors.baseURL) {
           this.errors.baseURL = undefined;
-          urlField.update({ error: undefined });
+          urlField.update({ value: current.baseURL, error: undefined });
         }
       },
     });
@@ -895,7 +895,7 @@ export class ProviderPanel {
         current.apiKey = value;
         if (this.errors.apiKey) {
           this.errors.apiKey = undefined;
-          keyField.update({ error: undefined });
+          keyField.update({ value: current.apiKey, error: undefined });
         }
       },
     });
@@ -908,8 +908,9 @@ export class ProviderPanel {
       size: 'xs',
       onClick: () => {
         this.keyVisible = !this.keyVisible;
-        // Only these two controls repaint, so the cursor stays in the field.
-        keyField.update({ password: !this.keyVisible });
+        // Only these two controls repaint, so the cursor stays in the field,
+        // and the current text travels with the repaint.
+        keyField.update({ value: current.apiKey, password: !this.keyVisible });
         toggleKey.update({ label: this.keyVisible ? this.tr('hideKey') : this.tr('showKey') });
       },
     });

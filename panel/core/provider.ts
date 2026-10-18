@@ -50,6 +50,7 @@ export type ModelDraft = {
 
 export type ProviderDraft = {
   providerID: string;
+  /** Display name; on a new provider it also suggests the ID. */
   name: string;
   protocol: ProtocolId;
   /** Only used when `protocol` is `custom`. */
@@ -71,6 +72,35 @@ export type ProviderEntry = {
 let modelKeySeq = 0;
 const nextKey = (): string => `m${(modelKeySeq += 1)}`;
 
+/**
+ * The provider ID a name suggests: lowercase latin letters, digits and
+ * dashes. Names without latin characters yield nothing, which is why the
+ * panel still offers the ID field for them.
+ */
+export const idFromName = (name: string): string => {
+  const slug = name
+    .normalize('NFKD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .slice(0, 48);
+  return /^[a-z0-9][a-z0-9-_]*$/.test(slug) ? slug : '';
+};
+
+/**
+ * An ID for a provider name that is not taken yet: the name in slug form, a
+ * numeric suffix when that is taken, and `provider` when the name has no
+ * latin characters to build from.
+ */
+export const uniqueIDFrom = (name: string, taken: readonly string[]): string => {
+  const base = idFromName(name) || 'provider';
+  if (!taken.includes(base)) return base;
+  let suffix = 2;
+  while (taken.includes(`${base}-${suffix}`)) suffix += 1;
+  return `${base}-${suffix}`;
+};
+
 export const emptyModel = (): ModelDraft => ({
   key: nextKey(),
   id: '',
@@ -85,8 +115,7 @@ export const emptyModel = (): ModelDraft => ({
 
 export const emptyDraft = (): ProviderDraft => ({
   providerID: '',
-  name: '',
-  protocol: DEFAULT_PROTOCOL,
+  name: '',  protocol: DEFAULT_PROTOCOL,
   customPackage: '',
   baseURL: '',
   apiKey: '',
@@ -369,9 +398,14 @@ export const buildProvider = (draft: ProviderDraft, existing?: JsonObject): Json
   const headers = headersOf(previous);
   const body = bodyOf(previous);
 
+  const name = draft.name.trim() || draft.providerID.trim();
+  const id = draft.providerID.trim();
+
   return withoutUndefined({
     ...carried,
-    name: draft.name.trim() || draft.providerID.trim(),
+    // OpenCode shows the provider ID when there is no name, so one that only
+    // repeats the ID is not written.
+    name: name && name !== id ? name : undefined,
     package: pkg,
     settings,
     ...(headers ? { headers } : {}),

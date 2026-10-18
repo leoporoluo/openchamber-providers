@@ -12,6 +12,7 @@ import {
   type ProviderDraft,
 } from '../panel/core/provider';
 import { positiveInt } from '../panel/core/json';
+import { idFromName, uniqueIDFrom } from '../panel/core/provider';
 import { packageFrom, protocolOfPackage } from '../panel/core/protocols';
 import { validateDraft } from '../panel/core/validate';
 
@@ -25,6 +26,23 @@ const draft = (overrides: Partial<ProviderDraft> = {}): ProviderDraft => ({
 });
 
 /* ------------------------------------------------------------------ limits */
+
+test('a provider name becomes a usable ID', () => {
+  assert.equal(idFromName('Acme Gateway'), 'acme-gateway');
+  assert.equal(idFromName('  Relay.Fast  '), 'relay-fast');
+  assert.equal(idFromName('中转站'), '');
+  assert.equal(uniqueIDFrom('Relay Fast', []), 'relay-fast');
+  assert.equal(uniqueIDFrom('Relay Fast', ['relay-fast']), 'relay-fast-2');
+  assert.equal(uniqueIDFrom('Relay Fast', ['relay-fast', 'relay-fast-2']), 'relay-fast-3');
+  assert.equal(uniqueIDFrom('中转站', []), 'provider');
+});
+
+test('a provider name equal to its ID is not written twice', () => {
+  const block = buildProvider(draft({ providerID: 'acme', name: 'acme' }));
+  assert.equal(block.name, undefined);
+  const named = buildProvider(draft({ providerID: 'acme', name: 'Acme Gateway' }));
+  assert.equal(named.name, 'Acme Gateway');
+});
 
 test('positiveInt accepts only positive safe whole numbers', () => {
   assert.equal(positiveInt('128000'), 128000);
@@ -114,6 +132,7 @@ test('editing only the name preserves a hand-written variant untouched', () => {
   const block = buildProvider(current, existing);
   const model = (block.models as Record<string, Record<string, unknown>>).coder!;
   assert.deepEqual(model.variants, [{ id: 'deep', settings: { reasoningEffort: 'high', vendorFlag: true } }]);
+  // A name the form does not edit is carried, but one equal to the ID is not written.
   assert.equal(model.name, 'Renamed');
 });
 
