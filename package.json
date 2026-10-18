@@ -1,6 +1,6 @@
 {
   "name": "openchamber-providers",
-  "version": "1.1.5",
+  "version": "2.0.0",
   "private": true,
   "description": "OpenChamber Providers — manage custom OpenAI-compatible providers for OpenCode from an OpenChamber panel.",
   "openchamber": {
@@ -26,11 +26,16 @@
     "build": "esbuild panel/main.ts --bundle --format=iife --platform=browser --target=es2020 --charset=utf8 --minify --outfile=panel/main.js",
     "build:dev": "esbuild panel/main.ts --bundle --format=iife --platform=browser --target=es2020 --charset=utf8 --outfile=panel/main.js",
     "typecheck": "tsc --noEmit",
-    "test": "esbuild tests/providers.test.ts --bundle --platform=node --format=cjs --outfile=.test-build.cjs && node --test .test-build.cjs"
+    "test": "esbuild tests/core.test.ts --bundle --platform=node --format=cjs --main-fields=module,main --outfile=.test-build.cjs && node --test .test-build.cjs",
+    "preview": "esbuild scripts/preview/preview.ts --bundle --format=iife --platform=browser --target=es2020 --charset=utf8 --outfile=scripts/preview/preview.js",
+    "check": "npm run typecheck && npm test && npm run build && npm run preview"
   },
   "devDependencies": {
     "@openchamber/sdk": "^2.0.0",
     "esbuild": "^0.25.0",
     "typescript": "^5.6.0"
+  },
+  "dependencies": {
+    "jsonc-parser": "^3.3.1"
   }
 }

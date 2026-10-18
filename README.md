@@ -6,36 +6,28 @@
 [![OpenCode](https://img.shields.io/badge/OpenCode-provider%20manager-555)](https://opencode.ai)
 [![License](https://img.shields.io/github/license/leoporoluo/openchamber-providers)](LICENSE)
 
-An [OpenChamber](https://openchamber.dev) extension that manages custom
-OpenAI-compatible providers for OpenCode from a panel on the right-hand rail.
+An [OpenChamber](https://openchamber.dev) extension that manages custom OpenAI-compatible
+providers for OpenCode from a panel on the right-hand rail, or as a full-screen page.
 
-OpenChamber Providers writes the `providers` block of `~/.config/opencode/opencode.jsonc`
-(or `opencode.json`) directly, so OpenCode reloads it on its own and the
-provider shows up in **Settings → Providers** — including its models, context
-length and reasoning levels. It edits only that block: comments, formatting and
-every unrelated setting in the file stay exactly as they were.
-
-## Why OpenChamber Providers?
-
-OpenCode supports many providers, gateways and local runtimes, but maintaining
-custom provider definitions by hand can be error-prone. OpenChamber Providers provides a small,
-focused UI for managing those definitions without taking over the rest of your
-OpenCode configuration.
+It writes the `providers` block of `~/.config/opencode/opencode.jsonc` (or `opencode.json`)
+directly, so OpenCode reloads it on its own and the provider appears in
+**Settings → Providers** — with its models, context length, capabilities and reasoning
+levels. Everything else in the file stays as it was: comments, formatting, key order and
+unrelated settings are preserved byte for byte.
 
 ## Features
 
-- Add, edit and delete custom providers (第三方中转站 / gateways / local runtimes)
-- Provider name, provider ID, protocol, base URL and API key
-- Models with display name, context length, max output and reasoning levels
-- Reasoning levels as clickable cards — `low`, `medium`, `high`, `xhigh`, `max`,
-  all off for a model that does not reason; new models start with
-  `low, medium, high` on
-- Per-model capabilities: image input (vision) and tool calling, written to `capabilities`
-- Refresh button re-reads the config without reopening the panel
-- Saving merges with the block already on disk, so provider headers, `env`
-  entries and per-model fields OpenChamber Providers does not edit are preserved
-- Writes plain provider config — no OAuth, no background service, no network calls
-- Panel follows the OpenChamber theme and can also open full-screen
+- Add, edit and delete custom providers (third-party gateways, self-hosted runtimes)
+- Provider ID, display name, API protocol, base URL and API key
+- Models with decimal context and output limits, upstream model ID, image input and tool calling
+- Reasoning levels as clickable cards, written as OpenCode's own `capabilities.reasoning`
+- A JSON preview of exactly what will be written, per provider
+- Reads both `opencode.json` and `opencode.jsonc`; edits write back to the file they came from
+- Saving merges with the block on disk, so headers, request bodies, pricing, disabled
+  models and hand-written variants survive
+- Reads and rewrites the legacy V1 spelling (`npm` / `options` / `variants` record) into V2
+- Panel follows the OpenChamber theme and layout: two columns on a page, drill-down on the rail
+- No network calls, no background service
 
 ## Install
 
@@ -45,12 +37,12 @@ In OpenChamber: **Settings → Extensions → Folder, ZIP or URL**, paste:
 https://github.com/leoporoluo/openchamber-providers.git
 ```
 
-then choose **Add** and approve the filesystem permission (it may read and
-write `~/.config/opencode/opencode.json`). The OpenChamber Providers icon appears on the rail.
+then choose **Add** and approve the filesystem permission (it may read and write
+`~/.config/opencode/opencode.json` and `opencode.jsonc`).
 
 Install from a local clone instead:
 
-```
+```bash
 git clone https://github.com/leoporoluo/openchamber-providers.git
 ```
 
@@ -58,80 +50,98 @@ and paste the absolute path of the cloned folder into the same field.
 
 ## Usage
 
-1. Open the OpenChamber Providers panel on the rail (or **Extension pages → OpenChamber Providers** for full screen).
+1. Open the panel on the rail, or **Extension pages → OpenChamber Providers** for full screen.
 2. Choose **Add provider**.
-3. Fill in the provider ID (e.g. `zero`), display name, protocol, base URL and API key.
-4. Add at least one model: ID, display name, context length, max output,
-   reasoning levels and whether it accepts images and calls tools.
-   Context length and max output can be left blank: the placeholder shows the
-   default (`272000` / `128000`) and that value is written to the config.
-   Reasoning levels are cards — click to switch a level on, click again to
-   switch it off. A new model starts with **low, medium, high** on; leaving
-   every card off means the model declares no reasoning levels.
-5. Choose **Save**. The provider is written to `opencode.json` and appears under
-   **Settings → Providers** in OpenChamber.
+3. Fill in the provider ID (e.g. `acme`), display name, API protocol, base URL and API key.
+4. Add at least one model: ID, display name, context length, max output, reasoning levels,
+   and whether it accepts images and calls tools.
+   Context length and max output may be left blank: no `limit` is written and OpenCode
+   applies its own defaults, rather than baking in numbers that may be wrong.
+5. Choose **Save**. The block is written and the provider appears under
+   **Settings → Providers**.
 
-Editing and deleting work the same way; deleting removes the block from the
-config file and disconnects the provider. **Refresh** re-reads the file when
-something changed outside the panel.
+Editing and deleting work the same way. **Reload** re-reads both config files when
+something changed outside the panel. **Show JSON** previews the exact block for the open
+provider.
 
-The API key is written to `settings.apiKey` as plain text. To keep the secret
-out of the file, set the key in an environment variable and enter
-`{env:VAR_NAME}` instead.
+The API key is written to `settings.apiKey` as plain text. To keep the secret out of the
+file, enter `{env:VAR_NAME}` (or `{file:path/to/secret}`) instead.
+
+### Built-in overrides
+
+A `providers.anthropic` entry that only sets `settings.baseURL` overrides a built-in
+provider rather than defining a new one. The panel lists these as **Built-in override** and
+leaves them untouched: it has no package or models to manage, and rewriting one would break
+the override.
 
 ## Security and permissions
 
-OpenChamber Providers does not make network requests, start a background service, or send
-prompts to an agent. It only reads and updates the OpenCode configuration files
-listed in its OpenChamber permission request. Unrelated configuration,
-comments and formatting are preserved.
+OpenChamber Providers makes no network requests, starts no background service and sends no
+prompts to an agent. It only reads and updates the OpenCode config files listed in its
+permission request.
 
-For credentials, prefer an environment reference such as
-`{env:OPENAI_API_KEY}` instead of storing an API key directly in the config.
+Writes are surgical: only `providers.<id>` is replaced (and a legacy `provider.<id>` twin
+removed), using `jsonc-parser` edits. The file is parsed before and after, so a broken file
+is reported with its line and column instead of being overwritten.
 
 ## Compatibility
 
 - OpenChamber 2.0.0 or newer
-- OpenCode 2.x configuration format
+- OpenCode 2.x configuration format (`providers` / `package` / `settings` / `modelID`),
+  with V1 configs migrated on save
 - Web and Desktop OpenChamber clients
-
-## For OpenChamber users
-
-OpenChamber Providers can be installed directly from:
-
-```text
-https://github.com/leoporoluo/openchamber-providers.git
-```
-
-The extension is also available for consideration in the
-[OpenChamber Extensions directory](https://openchamber.dev/extensions/).
 
 ## Development
 
 ```bash
 npm install
-npm run build      # bundle panel/main.ts -> panel/main.js (IIFE)
-npm run build:dev  # same, unminified
-npm run typecheck
+npm run typecheck   # tsc --noEmit
+npm test            # core logic tests, no host needed
+npm run build       # bundle panel/main.ts -> panel/main.js (IIFE)
+npm run build:dev   # same, unminified
+npm run preview     # build a local preview page in scripts/preview
+npm run check       # typecheck + test + build + preview
 ```
 
-OpenChamber never builds an extension on install, so commit the built
-`panel/main.js` together with the sources. To ship an update, bump `version` in
-`package.json`, rebuild, commit and push; the Extensions page then offers
-**Update**.
+The preview runs the real panel against an in-memory config: serve the repository with any
+static server and open `scripts/preview/index.html?theme=dark&locale=zh`. Add
+`&surface=rail` to check the narrow layout. It is a development aid and is not shipped in
+the extension.
+
+OpenChamber never builds an extension on install, so commit the built `panel/main.js` with
+the sources. To ship an update, bump `version` in `package.json`, rebuild, commit and push;
+the Extensions page then offers **Update**.
 
 ## Layout
 
 ```
-package.json       extension manifest (openchamber block) + build scripts
-icon.svg           rail icon, masked in the current text color
-panel/index.html   panel page + reasoning-card styles
-panel/main.ts      panel UI, host wiring and file i/o
-panel/jsonc.ts     JSONC parse + comment-preserving top-level edits
-panel/providers.ts provider drafts <-> opencode.json blocks (pure, testable)
-panel/levels.ts    reasoning-level cards (click to enable, click to disable)
-panel/main.js      built panel (committed)
+package.json           extension manifest (openchamber block) + build scripts
+icon.svg               rail icon, masked in the current text color
+panel/index.html       panel page
+panel/styles.css       layout and chrome, using only host theme tokens
+panel/main.ts          host connection, theme, locale
+panel/app.ts           panel state, layout and interactions
+panel/i18n.ts          English and Chinese copy
+panel/core/json.ts     JSON value helpers
+panel/core/config.ts   file location, read, and surgical JSONC writes
+panel/core/provider.ts provider drafts <-> config blocks, V1 migration
+panel/core/protocols.ts protocol <-> runtime package
+panel/core/validate.ts form validation
+panel/ui/               small DOM and icon helpers
+tests/core.test.ts     core logic tests
+scripts/preview/       development preview (not shipped)
 ```
+
+The `core` layer has no DOM and no host dependency: it takes JSON text and values in,
+returns text out, so it is testable in Node and the panel stays a thin shell over it.
+
+## Upgrading from 1.x
+
+Version 2.0.0 writes reasoning levels as `capabilities.reasoning` instead of hand-written
+`variants`, which is what OpenCode 2 uses to build protocol-correct variants. On the first
+save of a model, variants the old panel generated are dropped (standard level IDs whose
+settings contain only the reasoning keys it wrote) and hand-written variants are kept. The
+panel reads the old shape, so existing providers open with their levels and limits intact.
 
 ## License
 
