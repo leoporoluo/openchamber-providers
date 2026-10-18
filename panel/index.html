@@ -1,105 +1,10 @@
 <!doctype html>
-<html>
+<html lang="en">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>OpenChamber Providers</title>
-    <style>
-      html,
-      body {
-        margin: 0;
-        height: 100%;
-        /* The host paints its surface colour on the iframe; without a matching
-           background the color-scheme: light root canvas shows through as plain
-           white, which differs from the native panel background. */
-        background: var(--oc-bg, Canvas);
-      }
-      #root {
-        height: 100%;
-        box-sizing: border-box;
-        padding: 12px;
-        overflow-y: auto;
-        overflow-x: hidden;
-      }
-      html[data-surface="page"] #root {
-        padding: 24px;
-      }
-      .openchamber-providers-shell {
-        min-width: 0;
-      }
-      html[data-surface="page"] .openchamber-providers-shell {
-        max-width: 720px;
-        margin: 0 auto;
-      }
-      /* Reasoning-level cards (panel/levels.ts). Colours come from the host
-         theme variables the SDK paints on the root. */
-      .openchamber-providers-advanced {
-        display: flex;
-        flex-direction: column;
-        gap: 10px;
-        min-width: 0;
-      }
-      .openchamber-providers-advanced > summary {
-        width: fit-content;
-        color: var(--surface-muted-foreground, var(--oc-muted, inherit));
-        font-size: 0.8125rem;
-        cursor: pointer;
-        user-select: none;
-      }
-      .openchamber-providers-advanced[open] > summary {
-        color: var(--surface-foreground, var(--oc-foreground, inherit));
-      }
-      .openchamber-providers-field {
-        display: flex;
-        flex-direction: column;
-        gap: 6px;
-        min-width: 0;
-      }
-      .openchamber-providers-field-label {
-        font-size: 0.8125rem;
-        font-weight: 500;
-      }
-      .openchamber-providers-field-note {
-        font-size: 0.75rem;
-        line-height: 1.45;
-        color: var(--surface-muted-foreground, var(--oc-muted, gray));
-      }
-      .openchamber-providers-field[data-empty="true"] .openchamber-providers-field-note {
-        color: var(--warning-text, var(--oc-warning-text, inherit));
-      }
-      .openchamber-providers-levels {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 6px;
-      }
-      .openchamber-providers-level {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        min-width: 58px;
-        height: 30px;
-        padding: 0 12px;
-        border: 1px dashed var(--interactive-border, var(--oc-border, currentColor));
-        border-radius: 8px;
-        background: transparent;
-        color: var(--surface-muted-foreground, var(--oc-muted, inherit));
-        font-family: var(--font-mono, var(--oc-mono, monospace));
-        font-size: 0.75rem;
-        line-height: 1;
-        cursor: pointer;
-        transition: background 150ms ease-out, border-color 150ms ease-out, color 150ms ease-out;
-      }
-      .openchamber-providers-level:hover {
-        background: var(--interactive-hover, var(--oc-hover, transparent));
-      }
-      .openchamber-providers-level[data-on="true"] {
-        border-style: solid;
-        border-color: var(--primary, var(--oc-primary, currentColor));
-        background: color-mix(in srgb, var(--primary, var(--oc-primary, currentColor)) 12%, transparent);
-        color: var(--primary-text, var(--oc-primary-text, inherit));
-        font-weight: 600;
-      }
-    </style>
+    <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
     <div id="root"></div>

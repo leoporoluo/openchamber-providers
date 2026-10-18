@@ -1,0 +1,185 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>OpenChamber Providers · preview</title>
+    <style>
+      /* The host paints these tokens; the preview copies the app's own values so
+         the panel renders as it does inside OpenChamber. */
+      :root {
+        color-scheme: light;
+        --oc-bg: oklch(0.97 0.02 85);
+        --oc-elevated: oklch(0.99 0.01 90);
+        --oc-fg: oklch(0.25 0.02 40);
+        --oc-muted: oklch(0.45 0.02 50);
+        --oc-subtle: oklch(0.92 0.02 80);
+        --oc-border: oklch(0.85 0.02 70);
+        --oc-hover: oklch(0.9 0.015 75 / 0.7);
+        --oc-selection: oklch(0.65 0.2 55 / 0.12);
+        --oc-focus: oklch(0.65 0.2 55);
+        --oc-primary: oklch(0.65 0.2 55);
+        --oc-muted-surface: oklch(0.9 0.015 75);
+        --oc-elevated-fg: oklch(0.25 0.02 40);
+        --oc-active: oklch(0.92 0.02 80);
+        --oc-selection-fg: oklch(0.25 0.02 40);
+        --oc-primary-fg: oklch(0.99 0.01 90);
+        --oc-primary-text: oklch(0.5 0.18 50);
+        --oc-success-text: oklch(0.45 0.12 145);
+        --oc-warning-text: oklch(0.5 0.12 75);
+        --oc-error-text: oklch(0.5 0.2 25);
+        --oc-info-text: oklch(0.45 0.12 230);
+        --oc-success: oklch(0.58 0.15 145);
+        --oc-warning: oklch(0.6 0.16 85);
+        --oc-error: oklch(0.55 0.25 25);
+        --oc-info: oklch(0.58 0.15 230);
+        --oc-font: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+        --oc-mono: ui-monospace, SFMono-Regular, 'JetBrains Mono', Menlo, Consolas, monospace;
+        --oc-radius: 9px;
+        --surface-background: var(--oc-bg);
+        --surface-elevated: var(--oc-elevated);
+        --surface-foreground: var(--oc-fg);
+        --surface-muted-foreground: var(--oc-muted);
+        --surface-subtle: var(--oc-subtle);
+        --surface-elevated-foreground: var(--oc-elevated-fg);
+        --surface-muted: var(--oc-muted-surface);
+        --interactive-border: var(--oc-border);
+        --interactive-hover: var(--oc-hover);
+        --interactive-active: var(--oc-active);
+        --interactive-selection: var(--oc-selection);
+        --interactive-selection-foreground: var(--oc-selection-fg);
+        --interactive-focus-ring: var(--oc-focus);
+        --primary: var(--oc-primary);
+        --primary-foreground: var(--oc-primary-fg);
+        --primary-text: var(--oc-primary-text);
+        --success-text: var(--oc-success-text);
+        --warning-text: var(--oc-warning-text);
+        --error-text: var(--oc-error-text);
+        --info-text: var(--oc-info-text);
+        --status-success: var(--oc-success);
+        --status-warning: var(--oc-warning);
+        --status-error: var(--oc-error);
+        --status-info: var(--oc-info);
+        --font-sans: var(--oc-font);
+        --font-mono: var(--oc-mono);
+        --radius: var(--oc-radius);
+      }
+      :root[data-oc-theme='dark'] {
+        color-scheme: dark;
+        --oc-bg: oklch(0.16 0.01 30);
+        --oc-elevated: oklch(0.24 0.01 40);
+        --oc-fg: oklch(0.85 0.02 90);
+        --oc-muted: oklch(0.75 0.02 80);
+        --oc-subtle: oklch(0.29 0.01 40);
+        --oc-border: oklch(0.31 0.01 35);
+        --oc-hover: oklch(0.29 0.01 40 / 0.7);
+        --oc-selection: oklch(0.77 0.17 85 / 0.16);
+        --oc-focus: oklch(0.77 0.17 85);
+        --oc-primary: oklch(0.77 0.17 85);
+        --oc-muted-surface: oklch(0.33 0.01 40);
+        --oc-elevated-fg: oklch(0.85 0.02 90);
+        --oc-active: oklch(0.29 0.01 40);
+        --oc-selection-fg: oklch(0.85 0.02 90);
+        --oc-primary-fg: oklch(0.16 0.01 30);
+        --oc-primary-text: oklch(0.82 0.15 85);
+        --oc-success-text: oklch(0.75 0.12 145);
+        --oc-warning-text: oklch(0.8 0.13 85);
+        --oc-error-text: oklch(0.75 0.15 30);
+        --oc-info-text: oklch(0.75 0.12 230);
+        --oc-success: oklch(0.68 0.12 145);
+        --oc-warning: oklch(0.7 0.13 95);
+        --oc-error: oklch(0.65 0.15 30);
+        --oc-info: oklch(0.68 0.12 230);
+      }
+      /* The host gives its own radius a step down for controls. */
+      .oc-sdk-btn[data-variant='default'] {
+        background: color-mix(in srgb, var(--oc-primary) 12%, var(--oc-bg));
+        color: var(--oc-fg);
+        box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--oc-primary) 16%, transparent),
+          inset 0 1px 0 rgb(255 255 255 / 0.35), 0 1px 2px rgb(0 0 0 / 0.1);
+        border: 0;
+      }
+      .oc-sdk-btn[data-variant='outline'] {
+        background: var(--oc-elevated);
+        box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--oc-fg) 10%, transparent),
+          0 1px 2px rgb(0 0 0 / 0.06);
+        border: 0;
+      }
+
+      html,
+      body {
+        margin: 0;
+        height: 100%;
+        background: var(--oc-bg);
+      }
+      #root {
+        height: 100%;
+      }
+      .preview-bar {
+        position: fixed;
+        left: 50%;
+        bottom: 14px;
+        transform: translateX(-50%);
+        display: flex;
+        gap: 6px;
+        align-items: center;
+        padding: 6px 8px;
+        border-radius: 999px;
+        background: color-mix(in srgb, var(--oc-fg) 8%, var(--oc-bg));
+        box-shadow: 0 6px 20px -8px rgb(0 0 0 / 0.4);
+        font: 11px var(--oc-font);
+        color: var(--oc-muted);
+        z-index: 10;
+      }
+      .preview-bar a {
+        color: var(--oc-fg);
+        text-decoration: none;
+        padding: 3px 9px;
+        border-radius: 999px;
+      }
+      .preview-bar a[aria-current='true'] {
+        background: color-mix(in srgb, var(--oc-primary) 18%, transparent);
+      }
+      .preview-bar button {
+        font: inherit;
+        color: var(--oc-muted);
+        background: transparent;
+        border: 0;
+        cursor: pointer;
+        padding: 3px 8px;
+        border-radius: 999px;
+      }
+      .preview-bar button:hover {
+        background: color-mix(in srgb, var(--oc-fg) 8%, transparent);
+        color: var(--oc-fg);
+      }
+      .preview-toast {
+        position: fixed;
+        right: 16px;
+        bottom: 64px;
+        padding: 8px 12px;
+        border-radius: 8px;
+        font: 12px var(--oc-font);
+        color: var(--oc-fg);
+        background: color-mix(in srgb, var(--oc-success) 18%, var(--oc-bg));
+        box-shadow: 0 8px 24px -12px rgb(0 0 0 / 0.5);
+        z-index: 20;
+      }
+      .preview-toast[data-tone='error'] {
+        background: color-mix(in srgb, var(--oc-error) 18%, var(--oc-bg));
+      }
+    </style>
+    <link rel="stylesheet" href="../../panel/styles.css" />
+  </head>
+  <body>
+    <div id="root"></div>
+    <div class="preview-bar">
+      <a id="theme-dark" href="?theme=dark&locale=zh">深色</a>
+      <a id="theme-light" href="?theme=light&locale=zh">浅色</a>
+      <a id="surface-page" href="?theme=dark&locale=zh">全屏</a>
+      <a id="surface-rail" href="?theme=dark&locale=zh&surface=rail">侧栏</a>
+      <button id="reset" type="button">重置数据</button>
+    </div>
+    <script src="preview.js"></script>
+  </body>
+</html>

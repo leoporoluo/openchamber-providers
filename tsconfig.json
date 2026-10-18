@@ -11,5 +11,5 @@
     "skipLibCheck": true,
     "types": []
   },
-  "include": ["panel/main.ts"]
+  "include": ["panel/**/*.ts"]
 }
