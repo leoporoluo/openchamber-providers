@@ -532,7 +532,7 @@ export class ProviderPanel {
       const active = (this.draft ? this.editingID : this.selectedID) === entry.id;
       const row = el('button', 'provider-row', {
         type: 'button',
-        'aria-selected': String(active),
+        'aria-current': active ? 'true' : undefined,
         'data-focus': `row:${entry.id}`,
       });
       row.dataset.id = entry.id;
@@ -549,11 +549,6 @@ export class ProviderPanel {
       row.append(main);
 
       const meta = el('div', 'provider-meta');
-      if (active && this.isDirty()) {
-        const dot = el('span', 'dirty-dot');
-        dot.setAttribute('aria-hidden', 'true');
-        meta.append(dot);
-      }
       span(meta, String(modelCount(entry)));
       row.append(meta);
 
@@ -990,10 +985,8 @@ export class ProviderPanel {
     });
     head.append(toggle);
 
-    const id = span(head, model.id.trim() || `#${index + 1}`, 'model-id');
+    const id = span(head, model.name.trim() || model.id.trim() || `#${index + 1}`, 'model-id');
     id.title = model.id.trim();
-    const name = model.name.trim();
-    if (name && name !== model.id.trim()) span(head, name, 'model-name');
 
     const badges = el('div', 'model-badges');
     if (model.id.trim()) {
@@ -1034,24 +1027,7 @@ export class ProviderPanel {
       mono: true,
       placeholder: 'gpt-4o',
       error: this.modelIDError(model, current),
-      helper: this.tr('modelIDHelp'),
       onChange: (value) => { model.id = value; },
-    }));
-
-    this.mounted.push(mountTextField(fields, {
-      label: this.tr('modelName'),
-      value: model.name,
-      placeholder: 'GPT-4o',
-      onChange: (value) => { model.name = value; },
-    }));
-
-    this.mounted.push(mountTextField(fields, {
-      label: this.tr('modelUpstream'),
-      value: model.modelID,
-      mono: true,
-      placeholder: model.id.trim() || 'gpt-4o',
-      helper: this.tr('modelUpstreamHelp'),
-      onChange: (value) => { model.modelID = value; },
     }));
 
     this.mounted.push(mountTextField(fields, {
@@ -1067,6 +1043,34 @@ export class ProviderPanel {
       placeholder: this.tr('limitPlaceholder'),
       onChange: (value) => { model.output = value; },
     }));
+
+    /*
+     * Display name and upstream ID are optional and usually equal to the ID,
+     * so they stay folded into one row instead of three ID-shaped fields.
+     */
+    const advanced = el('details', 'wide model-advanced');
+    // Only an actual upstream alias needs attention; the name shows in the
+    // card title already, so the row stays folded otherwise.
+    advanced.open = model.modelID.trim() !== '';
+    const summary = el('summary');
+    summary.textContent = this.tr('modelAdvanced');
+    advanced.append(summary);
+    const advancedFields = el('div', 'field-grid');
+    advanced.append(advancedFields);
+    this.mounted.push(mountTextField(advancedFields, {
+      label: this.tr('modelName'),
+      value: model.name,
+      placeholder: model.id.trim() || 'GPT-4o',
+      onChange: (value) => { model.name = value; },
+    }));
+    this.mounted.push(mountTextField(advancedFields, {
+      label: this.tr('modelUpstream'),
+      value: model.modelID,
+      mono: true,
+      placeholder: model.id.trim() || 'gpt-4o',
+      onChange: (value) => { model.modelID = value; },
+    }));
+    fields.append(advanced);
 
     const levels = el('div', 'wide field-stack');
     const levelsLabel = el('div', 'mini-label');
@@ -1129,9 +1133,7 @@ export class ProviderPanel {
 
     const state = el('span', 'state');
     state.dataset.dirty = String(this.isDirty());
-    const dot = el('span', 'state-dot');
-    dot.setAttribute('aria-hidden', 'true');
-    state.append(dot, span(state, this.isDirty() ? this.tr('unsaved') : this.tr('savedState')));
+    state.textContent = this.isDirty() ? this.tr('unsaved') : this.tr('savedState');
     foot.append(state, el('div', 'spacer'));
 
     this.mounted.push(mountButton(foot, {

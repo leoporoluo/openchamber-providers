@@ -169,10 +169,6 @@ html[data-oc-surface='page'] .panes {
   background: var(--oc-hover, color-mix(in srgb, var(--oc-fg) 5%, transparent));
 }
 
-.provider-row[aria-selected='true'] {
-  background: color-mix(in srgb, var(--oc-primary) 13%, transparent);
-}
-
 .provider-row:focus-visible {
   outline: 2px solid var(--oc-focus, var(--oc-primary));
   outline-offset: -2px;
@@ -190,10 +186,6 @@ html[data-oc-surface='page'] .panes {
   color: var(--oc-fg);
   font: 600 0.625rem/1 var(--oc-mono, monospace);
   text-transform: uppercase;
-}
-
-.provider-row[aria-selected='true'] .provider-mark {
-  background: color-mix(in srgb, var(--oc-primary) 22%, transparent);
 }
 
 .provider-main {
@@ -226,13 +218,6 @@ html[data-oc-surface='page'] .panes {
   gap: 4px;
   font: 0.625rem/1 var(--oc-mono, monospace);
   color: var(--oc-muted);
-}
-
-.dirty-dot {
-  width: 5px;
-  height: 5px;
-  border-radius: 999px;
-  background: var(--oc-primary);
 }
 
 .sidebar-empty {
@@ -410,14 +395,6 @@ html[data-oc-surface='page'] .panes {
   text-overflow: ellipsis;
 }
 
-.model-name {
-  font-size: 0.6875rem;
-  color: var(--oc-muted);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
 .model-badges {
   margin-left: auto;
   flex: none;
@@ -507,6 +484,34 @@ html[data-oc-surface='page'] .panes {
   color: var(--oc-warning-text, var(--oc-warning, inherit));
 }
 
+/* Optional model fields folded into one quiet row. */
+.model-advanced {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+
+.model-advanced > summary {
+  width: fit-content;
+  font-size: 0.6875rem;
+  color: var(--oc-muted);
+  cursor: pointer;
+  user-select: none;
+}
+
+.model-advanced > summary:hover {
+  color: var(--oc-fg);
+}
+
+.model-advanced[open] > summary {
+  color: var(--oc-fg);
+}
+
+.model-advanced > .field-grid {
+  grid-template-columns: minmax(0, 1fr);
+}
+
 .add-model {
   display: inline-flex;
   align-items: center;
@@ -564,17 +569,6 @@ html[data-oc-surface='page'] .panes {
 
 .state[data-dirty='true'] {
   color: var(--oc-fg);
-}
-
-.state[data-dirty='true'] .state-dot {
-  background: var(--oc-primary);
-}
-
-.state-dot {
-  width: 5px;
-  height: 5px;
-  border-radius: 999px;
-  background: color-mix(in srgb, var(--oc-fg) 30%, transparent);
 }
 
 /* ------------------------------------------------------------------ notices */
