@@ -206,7 +206,8 @@ export const readModels = (provider: JsonObject): ModelDraft[] => {
       id,
       modelID: upstream && upstream !== id ? upstream : '',
       sourceID: id,
-      name: stringOf(entry.name) || id,
+      // Only an explicit name; one that repeats the ID is not repeated here.
+      name: stringOf(entry.name),
       context,
       output,
       // The config is the source of truth: a model with no reasoning record
@@ -304,11 +305,17 @@ const modelFor = (model: ModelDraft, previous: JsonObject): JsonObject => {
   delete carried.attachment;
   delete carried.tool_call;
 
-  const entry: JsonObject = {
-    ...carried,
-    modelID: upstream,
-    name: model.name.trim() || id,
-  };
+  const entry: JsonObject = { ...carried };
+
+  // The form edits neither the display name nor the upstream alias, so both
+  // come from the block on disk. OpenCode falls back to the catalog ID for
+  // each, so a value that only repeats the ID is not written at all.
+  const name = model.name.trim();
+  if (name && name !== id) entry.name = name;
+  else delete entry.name;
+
+  if (upstream && upstream !== id) entry.modelID = upstream;
+  else delete entry.modelID;
 
   const limit = limitFor(previous, model);
   if (limit) entry.limit = limit;

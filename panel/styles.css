@@ -484,34 +484,6 @@ html[data-oc-surface='page'] .panes {
   color: var(--oc-warning-text, var(--oc-warning, inherit));
 }
 
-/* Optional model fields folded into one quiet row. */
-.model-advanced {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  min-width: 0;
-}
-
-.model-advanced > summary {
-  width: fit-content;
-  font-size: 0.6875rem;
-  color: var(--oc-muted);
-  cursor: pointer;
-  user-select: none;
-}
-
-.model-advanced > summary:hover {
-  color: var(--oc-fg);
-}
-
-.model-advanced[open] > summary {
-  color: var(--oc-fg);
-}
-
-.model-advanced > .field-grid {
-  grid-template-columns: minmax(0, 1fr);
-}
-
 .add-model {
   display: inline-flex;
   align-items: center;

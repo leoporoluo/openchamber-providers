@@ -55,12 +55,6 @@ const en = {
   addModel: 'Add model',
   removeModel: 'Remove model',
   modelID: 'Model ID',
-  modelIDHelp: 'The ID used in model references.',
-  modelName: 'Display name',
-  modelNameHelp: 'Shown in the model picker. Defaults to the ID.',
-  modelUpstream: 'Upstream model ID',
-  modelUpstreamHelp: 'Sent to the endpoint when it differs from the ID.',
-  modelAdvanced: 'Name and upstream ID',
   context: 'Context length',
   output: 'Max output',
   limitPlaceholder: 'OpenCode default',
@@ -152,12 +146,6 @@ const zh: Dictionary = {
   addModel: '添加模型',
   removeModel: '移除模型',
   modelID: '模型 ID',
-  modelIDHelp: '模型引用中使用的 ID。',
-  modelName: '模型名称',
-  modelNameHelp: '显示在模型选择器中，留空则使用 ID。',
-  modelUpstream: '上游模型 ID',
-  modelUpstreamHelp: '与 ID 不同时，实际发送给端点的模型名。',
-  modelAdvanced: '名称与上游 ID',
   context: '上下文长度',
   output: '最大输出',
   limitPlaceholder: 'OpenCode 默认值',
@@ -203,3 +191,4 @@ export type MessageKey = keyof Dictionary;
 export const localeOf = (locale: string | undefined): Locale => (
   locale?.toLowerCase().startsWith('zh') ? 'zh' : 'en'
 );
+

@@ -985,7 +985,7 @@ export class ProviderPanel {
     });
     head.append(toggle);
 
-    const id = span(head, model.name.trim() || model.id.trim() || `#${index + 1}`, 'model-id');
+    const id = span(head, model.id.trim() || `#${index + 1}`, 'model-id');
     id.title = model.id.trim();
 
     const badges = el('div', 'model-badges');
@@ -1045,33 +1045,10 @@ export class ProviderPanel {
     }));
 
     /*
-     * Display name and upstream ID are optional and usually equal to the ID,
-     * so they stay folded into one row instead of three ID-shaped fields.
+     * The ID is the only name this form needs: the config keeps whatever
+     * display name and upstream alias it already has, and OpenCode falls back
+     * to the ID for both.
      */
-    const advanced = el('details', 'wide model-advanced');
-    // Only an actual upstream alias needs attention; the name shows in the
-    // card title already, so the row stays folded otherwise.
-    advanced.open = model.modelID.trim() !== '';
-    const summary = el('summary');
-    summary.textContent = this.tr('modelAdvanced');
-    advanced.append(summary);
-    const advancedFields = el('div', 'field-grid');
-    advanced.append(advancedFields);
-    this.mounted.push(mountTextField(advancedFields, {
-      label: this.tr('modelName'),
-      value: model.name,
-      placeholder: model.id.trim() || 'GPT-4o',
-      onChange: (value) => { model.name = value; },
-    }));
-    this.mounted.push(mountTextField(advancedFields, {
-      label: this.tr('modelUpstream'),
-      value: model.modelID,
-      mono: true,
-      placeholder: model.id.trim() || 'gpt-4o',
-      onChange: (value) => { model.modelID = value; },
-    }));
-    fields.append(advanced);
-
     const levels = el('div', 'wide field-stack');
     const levelsLabel = el('div', 'mini-label');
     levelsLabel.textContent = this.tr('reasoning');
