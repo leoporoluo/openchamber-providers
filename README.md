@@ -21,7 +21,6 @@ unrelated settings are preserved byte for byte.
 - Provider ID, display name, API protocol, base URL and API key
 - Models with decimal context and output limits, upstream model ID, image input and tool calling
 - Reasoning levels as clickable cards, written as OpenCode's own `capabilities.reasoning`
-- A JSON preview of exactly what will be written, per provider
 - Reads both `opencode.json` and `opencode.jsonc`; edits write back to the file they came from
 - Saving merges with the block on disk, so headers, request bodies, pricing, disabled
   models and hand-written variants survive
@@ -61,8 +60,7 @@ and paste the absolute path of the cloned folder into the same field.
    **Settings → Providers**.
 
 Editing and deleting work the same way. **Reload** re-reads both config files when
-something changed outside the panel. **Show JSON** previews the exact block for the open
-provider.
+something changed outside the panel.
 
 The API key is written to `settings.apiKey` as plain text. To keep the secret out of the
 file, enter `{env:VAR_NAME}` (or `{file:path/to/secret}`) instead.

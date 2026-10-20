@@ -99,7 +99,6 @@ export class ProviderPanel {
   private confirmingDelete = false;
   private pending: PendingConfirm | null = null;
   private keyVisible = false;
-  private showJSON = false;
   private expanded = new Set<string>();
   private detailScroll = 0;
 
@@ -212,7 +211,6 @@ export class ProviderPanel {
     this.confirmingDelete = false;
     this.pending = null;
     this.keyVisible = false;
-    this.showJSON = false;
     this.detailScroll = 0;
     this.expanded = new Set(this.draft.models.slice(0, 1).map((model) => model.key));
   }
@@ -226,7 +224,6 @@ export class ProviderPanel {
     this.confirmingDelete = false;
     this.pending = null;
     this.keyVisible = false;
-    this.showJSON = false;
     this.detailScroll = 0;
     this.expanded = new Set(this.draft.models.map((model) => model.key));
   }
@@ -238,7 +235,6 @@ export class ProviderPanel {
     this.errors = {};
     this.confirmingDelete = false;
     this.pending = null;
-    this.showJSON = false;
   }
 
   private select(id: string): void {
@@ -620,7 +616,7 @@ export class ProviderPanel {
     if (this.draft) {
       h1.textContent = this.draft.name.trim() || this.draft.providerID.trim() || this.tr('newProvider');
       sub.textContent = this.editingID === null
-        ? 'New'
+        ? this.tr('newTag')
         : `${this.draft.providerID} · ${this.protocolLabel(this.draft.protocol)}`;
       this.renderDraftActions(actions);
       this.renderDraftBody(body, this.draft);
@@ -671,36 +667,22 @@ export class ProviderPanel {
   }
 
   private renderDraftActions(actions: HTMLElement): void {
-    const json = el('button', 'icon-button', {
+    if (!this.editingID) return;
+
+    const remove = el('button', 'icon-button', {
       type: 'button',
-      'aria-pressed': String(this.showJSON),
-      'aria-label': this.showJSON ? this.tr('configPreviewHide') : this.tr('configPreview'),
-      title: this.showJSON ? this.tr('configPreviewHide') : this.tr('configPreview'),
+      'aria-label': this.tr('delete'),
+      title: this.tr('delete'),
     });
-    json.dataset.focus = 'toggle-json';
-    json.dataset.emphasis = String(this.showJSON);
-    json.append(icon('code', 15));
-    json.addEventListener('click', () => {
-      this.showJSON = !this.showJSON;
+    remove.dataset.focus = 'delete-provider';
+    remove.dataset.tone = 'danger';
+    remove.append(icon('trash', 15));
+    remove.addEventListener('click', () => {
+      this.confirmingDelete = true;
+      this.pending = null;
       this.paint();
     });
-    actions.append(json);
-
-    if (this.editingID) {
-      const remove = el('button', 'icon-button', {
-        type: 'button',
-        'aria-label': this.tr('delete'),
-        title: this.tr('delete'),
-      });
-      remove.dataset.focus = 'delete-provider';
-      remove.append(icon('trash', 15));
-      remove.addEventListener('click', () => {
-        this.confirmingDelete = true;
-        this.pending = null;
-        this.paint();
-      });
-      actions.append(remove);
-    }
+    actions.append(remove);
   }
 
   private sectionHead(title: string, extra?: string): HTMLElement {
@@ -876,8 +858,10 @@ export class ProviderPanel {
     });
     this.mounted.push(urlField);
 
-    const keyField = mountTextField(grid, {
-      label: this.tr('apiKey'),
+    const keyBlock = el('div', 'field-key');
+    grid.append(keyBlock);
+
+    const keyField = mountTextField(keyBlock, {
       value: current.apiKey,
       password: !this.keyVisible,
       mono: true,
@@ -893,8 +877,11 @@ export class ProviderPanel {
     });
     this.mounted.push(keyField);
 
-    const keyRow = el('div', 'wide field-actions');
-    const toggleKey = mountButton(keyRow, {
+    // The reveal toggle rides in the label row above the field, so the input
+    // keeps the full width of its column.
+    const keyLabelRow = el('div', 'field-label-row');
+    span(keyLabelRow, this.tr('apiKey'), 'mini-label');
+    const toggleKey = mountButton(keyLabelRow, {
       label: this.keyVisible ? this.tr('hideKey') : this.tr('showKey'),
       variant: 'ghost',
       size: 'xs',
@@ -907,7 +894,7 @@ export class ProviderPanel {
       },
     });
     this.mounted.push(toggleKey);
-    grid.append(keyRow);
+    keyBlock.insertBefore(keyLabelRow, keyBlock.firstChild);
 
     /* ---------------------------------------------------------------- models */
     const models = el('section', 'section');
@@ -929,21 +916,6 @@ export class ProviderPanel {
     });
     models.append(addModel);
     body.append(models);
-
-    if (this.showJSON) {
-      const section = el('section', 'section');
-      section.append(this.sectionHead(this.tr('configPreview')));
-      const preview = el('pre', 'json-preview');
-      preview.textContent = current.providerID.trim()
-        ? JSON.stringify(
-          { providers: { [current.providerID.trim()]: buildProvider(current, this.entryOf(this.editingID)?.block) } },
-          null,
-          2,
-        )
-        : this.tr('configPreviewEmpty');
-      section.append(preview);
-      body.append(section);
-    }
   }
 
   /** Inline hint for the row that causes a model-level validation error. */
