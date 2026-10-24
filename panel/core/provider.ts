@@ -330,7 +330,8 @@ export const variantSettingsFor = (pkg: string, level: string): JsonObject => {
  *
  * A generated standard level carries any extra keys (headers, body) the
  * previous variant of that id had. A variant with another id is hand-written
- * and always survives.
+ * and always survives; a standard level with extra keys survives for a known
+ * package too, since OpenCode merges named variants over the ones it derives.
  */
 const variantsFor = (previous: JsonObject, pkg: string, levels: readonly string[]): JsonObject[] => {
   const standard = new Set<string>(REASONING_LEVELS);
@@ -346,10 +347,14 @@ const variantsFor = (previous: JsonObject, pkg: string, levels: readonly string[
     }
     return rest;
   };
-  // Only a package OpenCode cannot map needs the levels written by hand.
-  const generated = protocolOfPackage(pkg) === 'custom'
-    ? selected.map((level) => ({ ...extrasOf(level), id: level, settings: variantSettingsFor(pkg, level) }))
-    : [];
+  const byHand = protocolOfPackage(pkg) === 'custom';
+  const generated = selected.flatMap((level) => {
+    const extras = extrasOf(level);
+    // A known package needs no overlay, but a variant with its own headers or
+    // body is the user's and stays.
+    if (!byHand && Object.keys(extras).length === 0) return [];
+    return [{ ...extras, id: level, settings: variantSettingsFor(pkg, level) }];
+  });
   const taken = new Set(generated.map((variant) => String(variant.id)));
   const handWritten = variantsOf(previous)
     .filter((variant) => !standard.has(variant.id) && !taken.has(variant.id))

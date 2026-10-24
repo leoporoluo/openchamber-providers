@@ -103,6 +103,30 @@ test('variants follow the protocol so the request carries the right field', () =
   assert.deepEqual(build('custom', 'aisdk:my-gateway').variants, [{ id: 'high', settings: { reasoningEffort: 'high' } }]);
 });
 
+test('a known package keeps a hand-written standard level with its own headers', () => {
+  const existing = {
+    package: 'aisdk:@ai-sdk/openai-compatible',
+    models: {
+      coder: {
+        variants: [
+          { id: 'high', settings: { reasoningEffort: 'low' }, headers: { 'X-Keep': '1' } },
+          { id: 'vendor', settings: { vendorFlag: true } },
+        ],
+      },
+    },
+  };
+  const current = draftFrom({ id: 'gw', block: existing, file: 'f', overlay: false });
+  current.models[0]!.levels = ['low', 'high'];
+  const block = buildProvider(current, existing);
+  const model = (block.models as Record<string, Record<string, unknown>>).coder!;
+  // OpenCode builds `low` from `capabilities.reasoning`; the variant with its
+  // own headers is the user's and stays, with its overlay refreshed.
+  assert.deepEqual(model.variants, [
+    { id: 'high', settings: { reasoningEffort: 'high' }, headers: { 'X-Keep': '1' } },
+    { id: 'vendor', settings: { vendorFlag: true } },
+  ]);
+});
+
 test('a custom package keeps a hand-written variant alongside generated ones', () => {
   const existing = {
     package: 'aisdk:my-gateway',
