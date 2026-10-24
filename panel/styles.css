@@ -200,10 +200,6 @@ html[data-oc-surface='page'] .panes {
   background: var(--fill);
 }
 
-.provider-row[aria-current='true'] {
-  background: var(--fill-strong);
-}
-
 .provider-row:focus-visible {
   outline: 2px solid var(--oc-focus, var(--oc-primary));
   outline-offset: -2px;
@@ -225,8 +221,7 @@ html[data-oc-surface='page'] .panes {
 }
 
 .provider-row[aria-current='true'] .provider-mark {
-  box-shadow: none;
-  background: color-mix(in srgb, var(--accent) 16%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent) 45%, transparent);
   color: var(--oc-fg);
 }
 
@@ -480,34 +475,12 @@ html[data-oc-surface='page'] .panes {
 }
 
 .model-id {
+  flex: 1;
+  min-width: 0;
   font: 0.75rem/1.3 var(--oc-mono, monospace);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-}
-
-.model-badges {
-  margin-left: auto;
-  flex: none;
-  display: flex;
-  align-items: center;
-  gap: 5px;
-}
-
-.badge {
-  font: 0.625rem/1.65 var(--oc-mono, monospace);
-  color: var(--oc-muted);
-  background: transparent;
-  border: 1px solid var(--line-soft);
-  padding: 0 6px;
-  border-radius: 999px;
-  white-space: nowrap;
-}
-
-.badge[data-tone='accent'] {
-  color: var(--oc-fg);
-  border-color: color-mix(in srgb, var(--accent) 38%, transparent);
-  background: color-mix(in srgb, var(--accent) 10%, transparent);
 }
 
 .model-body {

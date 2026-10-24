@@ -21,7 +21,7 @@ import {
   type FileHost,
   type Snapshot,
 } from './core/config';
-import { isObject, positiveInt } from './core/json';
+import { isObject } from './core/json';
 import {
   buildProvider,
   draftFrom,
@@ -71,12 +71,6 @@ const rowSubtitle = (entry: ProviderEntry, overlayLabel: string): string => {
 };
 
 const modelCount = (entry: ProviderEntry): number => (isObject(entry.block.models) ? Object.keys(entry.block.models).length : 0);
-
-const limitLabel = (value: number): string => {
-  if (value >= 1_000_000) return `${Number((value / 1_000_000).toFixed(1))}M`;
-  if (value >= 1000) return `${Math.round(value / 1000)}k`;
-  return String(value);
-};
 
 export class ProviderPanel {
   private readonly root: HTMLElement;
@@ -952,17 +946,6 @@ export class ProviderPanel {
 
     const id = span(head, model.id.trim() || `#${index + 1}`, 'model-id');
     id.title = model.id.trim();
-
-    const badges = el('div', 'model-badges');
-    if (model.id.trim()) {
-      const context = positiveInt(model.context);
-      if (context !== undefined) span(badges, `${limitLabel(context)} ctx`, 'badge');
-      if (model.levels.length > 0) {
-        const badge = span(badges, fill(this.tr('levelsBadge'), { n: String(model.levels.length) }), 'badge');
-        badge.dataset.tone = 'accent';
-      }
-    }
-    head.append(badges);
 
     if (current.models.length > 1) {
       const remove = el('button', 'model-toggle', {

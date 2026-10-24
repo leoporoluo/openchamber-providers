@@ -81,7 +81,6 @@ const en = {
   protocolOpenAIResponses: 'OpenAI Responses',
   protocolAnthropic: 'Anthropic Messages',
   protocolCustom: 'Custom package',
-  levelsBadge: '{n} levels',
 };
 
 type Dictionary = typeof en;
@@ -164,7 +163,6 @@ const zh: Dictionary = {
   protocolOpenAIResponses: 'OpenAI Responses',
   protocolAnthropic: 'Anthropic Messages',
   protocolCustom: '自定义运行时包',
-  levelsBadge: '{n} 档推理',
 };
 
 export const DICTIONARIES = { en, zh };
