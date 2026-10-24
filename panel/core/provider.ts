@@ -140,21 +140,11 @@ const bodyOf = (provider: JsonObject): JsonObject | undefined => {
   return options && isObject(options.body) ? options.body : undefined;
 };
 
-/** Names of the keys the previous version wrote into generated variants. */
-const LEGACY_VARIANT_KEYS = new Set(['reasoningEffort', 'reasoningSummary', 'include', 'thinking', 'effort']);
-
 /**
- * A variant this panel generated in an earlier version: a standard level ID,
- * an overlay of nothing but the old reasoning keys, and no headers or body.
- * Anything carrying a field of its own is treated as hand-written and kept.
+ * Names of the keys OpenCode's variant overlays carry. A V1 record flattened
+ * them next to `id` instead of under `settings`, so they are not "extra".
  */
-const isLegacyVariant = (variant: JsonObject): boolean => {
-  const extra = Object.keys(variant).filter((key) => key !== 'id' && key !== 'settings');
-  if (extra.length > 0) return false;
-  const settings = isObject(variant.settings) ? variant.settings : {};
-  const keys = Object.keys(settings);
-  return keys.length > 0 && keys.every((key) => LEGACY_VARIANT_KEYS.has(key));
-};
+const LEGACY_OVERLAY_KEYS = new Set(['reasoningEffort', 'reasoningSummary', 'include', 'thinking', 'effort']);
 
 type VariantParts = { id: string; overlay: JsonObject };
 
@@ -287,11 +277,17 @@ const capabilitiesFor = (previous: JsonObject, model: ModelDraft): JsonObject =>
  * `capabilities.reasoning` in OpenCode's V2 shape. OpenCode builds the
  * protocol-correct variants from it, so switching protocols cannot leave a
  * stale `thinking` / `reasoningEffort` behind.
+ *
+ * A previous `reasoning: { supported: true }` that names no levels is left as
+ * it is when every card is off: OpenCode takes the levels from the runtime
+ * package there, and a save must not silently declare reasoning unsupported.
+ * Picking a card replaces it with an explicit `effort` list.
  */
 const reasoningFor = (capabilities: JsonObject, levels: readonly string[]): JsonObject | undefined => {
   const previous = isObject(capabilities.reasoning) ? capabilities.reasoning : undefined;
   const unique = [...new Set(levels.map((level) => level.trim()).filter(Boolean))];
   if (unique.length === 0) {
+    if (previous?.supported === true && !Array.isArray(previous.effort)) return { supported: true };
     // Nothing to reason with. Keep the explicit "off" only when the previous
     // block declared reasoning; otherwise leave the key absent.
     return previous === undefined ? undefined : { supported: false };
@@ -305,12 +301,60 @@ const reasoningFor = (capabilities: JsonObject, levels: readonly string[]): Json
   };
 };
 
-/** Removes variants the previous version generated, keeps anything hand-written. */
-const cleanVariants = (previous: JsonObject): JsonObject[] => {
-  const kept = variantsOf(previous).filter((variant) => (
-    (REASONING_LEVELS as readonly string[]).includes(variant.id) ? !isLegacyVariant(variant.overlay) : true
-  ));
-  return kept.map((variant) => variant.overlay);
+/**
+ * Settings OpenCode 2 derives for one level of a package. Kept in step with
+ * the runtime: `@ai-sdk/anthropic` takes `thinking`/`effort`,
+ * `@ai-sdk/openai` takes `reasoningEffort` with a summary, and everything
+ * else (including custom packages, which OpenCode cannot map) takes
+ * `reasoningEffort`.
+ */
+export const variantSettingsFor = (pkg: string, level: string): JsonObject => {
+  const protocol = protocolOfPackage(pkg);
+  if (protocol === 'anthropic-messages') {
+    return { thinking: { type: 'adaptive', display: 'summarized' }, effort: level };
+  }
+  if (protocol === 'openai-responses') {
+    return { reasoningEffort: level, reasoningSummary: 'auto', include: ['reasoning.encrypted_content'] };
+  }
+  return { reasoningEffort: level };
+};
+
+/**
+ * Variants for the selected levels.
+ *
+ * OpenCode derives variants from `capabilities.reasoning` by itself, but only
+ * for the runtime packages it knows: for a custom `aisdk:` package it derives
+ * none, and the levels then never reach the picker or the request. Those
+ * packages get their levels written out as variants too; known packages keep
+ * relying on `capabilities.reasoning`, so the file stays as small as before.
+ *
+ * A generated standard level carries any extra keys (headers, body) the
+ * previous variant of that id had. A variant with another id is hand-written
+ * and always survives.
+ */
+const variantsFor = (previous: JsonObject, pkg: string, levels: readonly string[]): JsonObject[] => {
+  const standard = new Set<string>(REASONING_LEVELS);
+  const selected = [...new Set(levels.map((level) => level.trim()).filter(Boolean))];
+  const extrasOf = (id: string): JsonObject => {
+    const found = variantsOf(previous).find((variant) => variant.id === id);
+    if (!found) return {};
+    // A V1 record kept the overlay inline rather than under `settings`; only
+    // keys with no V2 meaning (headers, body) count as extras either way.
+    const rest: JsonObject = {};
+    for (const [key, value] of Object.entries(found.overlay)) {
+      if (key !== 'id' && key !== 'settings' && !LEGACY_OVERLAY_KEYS.has(key)) rest[key] = value;
+    }
+    return rest;
+  };
+  // Only a package OpenCode cannot map needs the levels written by hand.
+  const generated = protocolOfPackage(pkg) === 'custom'
+    ? selected.map((level) => ({ ...extrasOf(level), id: level, settings: variantSettingsFor(pkg, level) }))
+    : [];
+  const taken = new Set(generated.map((variant) => String(variant.id)));
+  const handWritten = variantsOf(previous)
+    .filter((variant) => !standard.has(variant.id) && !taken.has(variant.id))
+    .map((variant) => ({ ...variant.overlay, id: variant.id }));
+  return [...generated, ...handWritten];
 };
 
 const limitFor = (previous: JsonObject, model: ModelDraft): JsonObject | undefined => {
@@ -324,7 +368,7 @@ const limitFor = (previous: JsonObject, model: ModelDraft): JsonObject | undefin
   return Object.keys(kept).length > 0 ? kept : undefined;
 };
 
-const modelFor = (model: ModelDraft, previous: JsonObject): JsonObject => {
+const modelFor = (model: ModelDraft, previous: JsonObject, pkg: string): JsonObject => {
   const id = model.id.trim();
   const upstream = model.modelID.trim() || id;
   // V1 spellings of what we write below.
@@ -338,9 +382,12 @@ const modelFor = (model: ModelDraft, previous: JsonObject): JsonObject => {
 
   // The form edits neither the display name nor the upstream alias, so both
   // come from the block on disk. OpenCode falls back to the catalog ID for
-  // each, so a value that only repeats the ID is not written at all.
+  // each, so a value that only repeats the ID is not written at all. A name
+  // that only repeated the *previous* ID is dropped on a rename too, or the
+  // picker would keep showing the old model name.
   const name = model.name.trim();
-  if (name && name !== id) entry.name = name;
+  const repeating = name === id || (model.sourceID !== undefined && name === model.sourceID);
+  if (name && !repeating) entry.name = name;
   else delete entry.name;
 
   if (upstream && upstream !== id) entry.modelID = upstream;
@@ -352,9 +399,10 @@ const modelFor = (model: ModelDraft, previous: JsonObject): JsonObject => {
 
   entry.capabilities = capabilitiesFor(previous, model);
 
-  // V2 replaces generated variants from `capabilities.reasoning`. Keep the
-  // hand-written ones and drop what an older build of this panel wrote.
-  const variants = cleanVariants(previous);
+  // Levels are written twice on purpose: `capabilities.reasoning` is what
+  // OpenCode reads to list the levels, and the variants carry the per-protocol
+  // settings for the packages it cannot map. Hand-written variants survive.
+  const variants = variantsFor(previous, pkg, model.levels);
   if (variants.length > 0) entry.variants = variants;
   else delete entry.variants;
 
@@ -365,6 +413,10 @@ export const buildProvider = (draft: ProviderDraft, existing?: JsonObject): Json
   const previous = existing ?? {};
   const previousModels = isObject(previous.models) ? previous.models : {};
 
+  const pkg = draft.protocol === 'custom'
+    ? draft.customPackage.trim() || packageOfProtocol(DEFAULT_PROTOCOL)
+    : packageOfProtocol(draft.protocol);
+
   const models: JsonObject = {};
   for (const model of draft.models) {
     const id = model.id.trim();
@@ -372,7 +424,7 @@ export const buildProvider = (draft: ProviderDraft, existing?: JsonObject): Json
     const candidate = model.sourceID ? previousModels[model.sourceID] : previousModels[id];
     const fallback = previousModels[id];
     const source = isObject(candidate) ? candidate : isObject(fallback) ? fallback : undefined;
-    models[id] = modelFor(model, source ? { ...source } : {});
+    models[id] = modelFor(model, source ? { ...source } : {}, pkg);
   }
 
   const settings: JsonObject = {
@@ -390,10 +442,6 @@ export const buildProvider = (draft: ProviderDraft, existing?: JsonObject): Json
   delete carried.options;
   delete carried.api;
   delete carried.id;
-
-  const pkg = draft.protocol === 'custom'
-    ? draft.customPackage.trim() || packageOfProtocol(DEFAULT_PROTOCOL)
-    : packageOfProtocol(draft.protocol);
 
   const headers = headersOf(previous);
   const body = bodyOf(previous);

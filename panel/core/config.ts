@@ -44,11 +44,14 @@ const isMissing = (kind: string): boolean => kind === 'missing';
 
 /** Parses JSONC, turning a syntax error into a message naming the offset. */
 export const parseConfig = (text: string, path: string): JsonObject => {
+  // Editors on Windows may save a UTF-8 BOM; jsonc-parser rejects it as an
+  // invalid symbol, which would make a perfectly readable file unopenable.
+  const source = text.charCodeAt(0) === 0xfeff ? text.slice(1) : text;
   const errors: ParseError[] = [];
-  const value: unknown = parse(text, errors, { allowTrailingComma: true, disallowComments: false });
+  const value: unknown = parse(source, errors, { allowTrailingComma: true, disallowComments: false });
   const first = errors[0];
   if (first) {
-    const line = text.slice(0, first.offset).split('\n');
+    const line = source.slice(0, first.offset).split('\n');
     throw new Error(`${path}: ${printParseErrorCode(first.error)} at line ${line.length}, column ${(line[line.length - 1]?.length ?? 0) + 1}`);
   }
   if (!isObject(value)) throw new Error(`${path}: the root must be a JSON object.`);

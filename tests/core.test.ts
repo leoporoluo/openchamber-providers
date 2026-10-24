@@ -80,7 +80,68 @@ test('reasoning is written in the V2 shape, not as variants', () => {
   }));
   const model = (block.models as Record<string, Record<string, unknown>>).coder!;
   assert.deepEqual((model.capabilities as Record<string, unknown>).reasoning, { supported: true, effort: ['low', 'high'] });
+  // OpenCode derives the variants from `capabilities.reasoning` for the
+  // packages this panel offers, so none are written by hand.
   assert.equal(model.variants, undefined);
+});
+
+test('variants follow the protocol so the request carries the right field', () => {
+  const build = (protocol: ProviderDraft['protocol'], customPackage = ''): Record<string, any> => (
+    (buildProvider(draft({
+      protocol,
+      customPackage,
+      models: [{ ...emptyModel(), id: 'coder', levels: ['high'] }],
+    })).models as Record<string, any>).coder
+  );
+  // OpenCode derives these itself from `capabilities.reasoning`; writing them
+  // again would only duplicate what the runtime already computes.
+  assert.equal(build('openai-chat').variants, undefined);
+  assert.equal(build('openai-responses').variants, undefined);
+  assert.equal(build('anthropic-messages').variants, undefined);
+  // A custom package gets no variants from OpenCode at all, so the panel has
+  // to write them or the levels never reach the picker.
+  assert.deepEqual(build('custom', 'aisdk:my-gateway').variants, [{ id: 'high', settings: { reasoningEffort: 'high' } }]);
+});
+
+test('a custom package keeps a hand-written variant alongside generated ones', () => {
+  const existing = {
+    package: 'aisdk:my-gateway',
+    models: {
+      coder: {
+        variants: [
+          { id: 'high', settings: { reasoningEffort: 'high' }, headers: { 'X-Keep': '1' } },
+          { id: 'vendor', settings: { vendorFlag: true } },
+        ],
+      },
+    },
+  };
+  const current = draftFrom({ id: 'gw', block: existing, file: 'f', overlay: false });
+  current.models[0]!.levels = ['low', 'high'];
+  const block = buildProvider(current, existing);
+  const model = (block.models as Record<string, Record<string, unknown>>).coder!;
+  assert.deepEqual(model.variants, [
+    { id: 'low', settings: { reasoningEffort: 'low' } },
+    { id: 'high', settings: { reasoningEffort: 'high' }, headers: { 'X-Keep': '1' } },
+    { id: 'vendor', settings: { vendorFlag: true } },
+  ]);
+});
+
+test('a package that decides its own levels is not turned off by a save', () => {
+  const existing = { models: { coder: { capabilities: { reasoning: { supported: true } } } } };
+  const block = buildProvider(draft({ models: [{ ...emptyModel(), id: 'coder', levels: [], sourceID: 'coder' }] }), existing);
+  const model = (block.models as Record<string, Record<string, unknown>>).coder!;
+  assert.deepEqual((model.capabilities as Record<string, unknown>).reasoning, { supported: true });
+});
+
+test('a renamed model drops a display name that only repeated the old ID', () => {
+  const existing = { models: { old: { name: 'old', modelID: 'old' } } };
+  const current = draftFrom({ id: 'acme', block: existing, file: 'x', overlay: false });
+  current.models[0]!.id = 'new';
+  // The form keeps the name it read; it must not survive under the new key.
+  assert.equal(current.models[0]!.name, 'old');
+  const block = buildProvider(current, existing);
+  const model = (block.models as Record<string, Record<string, unknown>>).new!;
+  assert.equal(model.name, undefined);
 });
 
 test('turning every level off declares reasoning unsupported', () => {
@@ -96,8 +157,9 @@ test('a model that never declared reasoning keeps the key absent when all cards 
   assert.equal((model.capabilities as Record<string, unknown>).reasoning, undefined);
 });
 
-test('previously generated variants are dropped and hand-written ones survive', () => {
+test('previously generated variants are replaced and hand-written ones survive', () => {
   const existing = {
+    package: 'aisdk:my-gateway',
     models: {
       coder: {
         modelID: 'coder',
@@ -110,11 +172,36 @@ test('previously generated variants are dropped and hand-written ones survive', 
       },
     },
   };
-  const block = buildProvider(draft({ models: [{ ...emptyModel(), id: 'coder', sourceID: 'coder', levels: ['low'] }] }), existing);
+  const block = buildProvider(draft({
+    protocol: 'custom',
+    customPackage: 'aisdk:my-gateway',
+    models: [{ ...emptyModel(), id: 'coder', sourceID: 'coder', levels: ['low'] }],
+  }), existing);
   const model = (block.models as Record<string, Record<string, unknown>>).coder!;
   assert.deepEqual(model.variants, [
+    { id: 'low', settings: { reasoningEffort: 'low' } },
     { id: 'vendor', settings: { reasoningEffort: 'low', vendorFlag: true } },
     { id: 'high-custom', settings: { reasoningEffort: 'high' }, headers: { 'X-Keep': '1' } },
+  ]);
+});
+
+test('a hand-written standard level keeps its headers while the overlay is refreshed', () => {
+  const existing = {
+    package: 'aisdk:my-gateway',
+    models: {
+      coder: {
+        variants: [{ id: 'high', settings: { reasoningEffort: 'low' }, headers: { 'X-Keep': '1' } }],
+      },
+    },
+  };
+  const block = buildProvider(draft({
+    protocol: 'custom',
+    customPackage: 'aisdk:my-gateway',
+    models: [{ ...emptyModel(), id: 'coder', sourceID: 'coder', levels: ['high'] }],
+  }), existing);
+  const model = (block.models as Record<string, Record<string, unknown>>).coder!;
+  assert.deepEqual(model.variants, [
+    { id: 'high', settings: { reasoningEffort: 'high' }, headers: { 'X-Keep': '1' } },
   ]);
 });
 

@@ -20,7 +20,8 @@ unrelated settings are preserved byte for byte.
 - Add, edit and delete custom providers (third-party gateways, self-hosted runtimes)
 - Provider ID, display name, API protocol, base URL and API key
 - Models with decimal context and output limits, upstream model ID, image input and tool calling
-- Reasoning levels as clickable cards, written as OpenCode's own `capabilities.reasoning`
+- Reasoning levels as clickable cards, written as OpenCode's own `capabilities.reasoning`;
+  a custom package also gets the matching `variants`, since OpenCode derives none for it
 - Reads both `opencode.json` and `opencode.jsonc`; edits write back to the file they came from
 - Saving merges with the block on disk, so headers, request bodies, pricing, disabled
   models and hand-written variants survive
@@ -140,6 +141,29 @@ Version 2.0.0 writes reasoning levels as `capabilities.reasoning` instead of han
 save of a model, variants the old panel generated are dropped (standard level IDs whose
 settings contain only the reasoning keys it wrote) and hand-written variants are kept. The
 panel reads the old shape, so existing providers open with their levels and limits intact.
+
+## Troubleshooting reasoning levels
+
+OpenCode 2 only turns `capabilities.reasoning` into variants for the runtime packages it
+knows. With a **Custom package** it derives nothing, so the panel writes the variants for
+the selected levels itself; they are plain `reasoningEffort` overlays, which is what an
+OpenAI-compatible endpoint expects.
+
+If a model shows no levels in the picker after saving, check these in order:
+
+1. The model has at least one level selected. Every card off writes
+   `reasoning: { supported: false }`, which hides the picker on purpose.
+2. The selected level is supported by the endpoint. A gateway that only accepts `low`,
+   `medium` and `high` rejects `xhigh` or `max`; pick the ones it documents.
+3. The protocol matches the endpoint. **OpenAI Chat Completions** covers `/chat/completions`,
+   **OpenAI Responses** covers `/responses` (and attaches `reasoning.encrypted_content`),
+   **Anthropic Messages** covers `/messages` (and sends `thinking` plus `effort`).
+   Using the wrong one produces a request the endpoint refuses, even though the level shows.
+
+A hand-written `reasoning: { supported: true }` that names no levels is left alone when
+every card is off, because the package decides the levels in that mode. A model renamed in
+the panel also drops a display name that only repeated the old ID, so the picker never shows
+the previous name.
 
 ## License
 
